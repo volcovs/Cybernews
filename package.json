@@ -1,0 +1,27 @@
+{
+  "name": "cybernews",
+  "version": "1.0.0",
+  "description": "An experiment for creating a personalized news feed",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/volcovs/Cybernews.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/volcovs/Cybernews/issues"
+  },
+  "homepage": "https://github.com/volcovs/Cybernews#readme",
+  "dependencies": {
+    "dropbox": "^10.44.0"
+  }
+}
