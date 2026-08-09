@@ -10,6 +10,21 @@ def get_dropbox_client() -> dropbox.Dropbox:
         app_secret=settings.dropbox_app_secret,
     )
 
+def _normalize_path(path: str) -> str:
+    path = path.replace("\\", "/").strip()
+
+    if not path:
+        raise ValueError("Dropbox path cannot be empty")
+
+    if not path.startswith("/"):
+        path = "/" + path
+
+    # Collapse accidental duplicate slashes.
+    while "//" in path:
+        path = path.replace("//", "/")
+
+    return path
+
 class DropboxStorage:
     def __init__(self) -> None:
         self.client = dropbox.Dropbox(
@@ -29,27 +44,31 @@ class DropboxStorage:
         return f"/{path}"
 
     def write_text(self, path: str, content: str) -> None:
+        path = _normalize_path(path)
+
         self.client.files_upload(
             content.encode("utf-8"),
-            self._path(path),
+            path,
             mode=dropbox.files.WriteMode.overwrite,
         )
 
     def read_text(self, path: str) -> str:
+        path = _normalize_path(path)
+
         _, response = self.client.files_download(
-            self._path(path)
+            path
         )
 
         return response.content.decode("utf-8")
 
     def delete(self, path: str) -> None:
         self.client.files_delete_v2(
-            self._path(path)
+            _normalize_path(path)
         )
 
     def exists(self, path: str) -> bool:
         try:
-            self.client.files_get_metadata(self._path(path))
+            self.client.files_get_metadata(_normalize_path(path))
             return True
         except dropbox.exceptions.ApiError:
             return False
