@@ -31,17 +31,31 @@ async function readText(path) {
 
     const result = response.result;
 
-    if (typeof result.fileBinary === "string") {
-        return Buffer
-            .from(result.fileBinary, "base64")
-            .toString("utf-8");
-    }
+    console.log(
+        "Dropbox download result keys:",
+        Object.keys(result)
+    );
 
     if (result.fileBlob) {
         return await result.fileBlob.text();
     }
 
-    throw new Error("Unable to read Dropbox file");
+    if (result.fileBinary) {
+        return Buffer
+            .from(result.fileBinary)
+            .toString("utf-8");
+    }
+
+    if (result.fileBuffer) {
+        return Buffer
+            .from(result.fileBuffer)
+            .toString("utf-8");
+    }
+
+    throw new Error(
+        `Unable to read Dropbox file. ` +
+        `Available fields: ${Object.keys(result).join(", ")}`
+    );
 }
 
 export default async () => {
