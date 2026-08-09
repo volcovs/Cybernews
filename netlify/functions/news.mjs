@@ -6,6 +6,7 @@ const dbx = new Dropbox({
     refreshToken: process.env.DROPBOX_REFRESH_TOKEN,
 });
 
+
 function normalizePath(path) {
     path = path.replaceAll("\\", "/").trim();
 
@@ -21,8 +22,13 @@ function normalizePath(path) {
         path = path.replaceAll("//", "/");
     }
 
+    if (path.length > 1) {
+        path = path.replace(/\/+$/, "");
+    }
+
     return path;
 }
+
 
 async function readText(path) {
     const response = await dbx.filesDownload({
@@ -30,11 +36,6 @@ async function readText(path) {
     });
 
     const result = response.result;
-
-    console.log(
-        "Dropbox download result keys:",
-        Object.keys(result)
-    );
 
     if (result.fileBlob) {
         return await result.fileBlob.text();
@@ -58,73 +59,245 @@ async function readText(path) {
     );
 }
 
-export default async () => {
+
+async function listArticleFiles(path) {
+    const entries = [];
+
+    let response = await dbx.filesListFolder({
+        path,
+    });
+
+    entries.push(...response.result.entries);
+
+    while (response.result.has_more) {
+        response = await dbx.filesListFolderContinue({
+            cursor: response.result.cursor,
+        });
+
+        entries.push(...response.result.entries);
+    }
+
+    return entries.filter(
+        entry =>
+            entry[".tag"] === "file" &&
+            entry.name.endsWith(".jsonl")
+    );
+}
+
+
+function parseDateFromFilename(filename) {
+    const match =
+        filename.match(/^(\d{4}-\d{2}-\d{2})\.jsonl$/);
+
+    if (!match) {
+        return null;
+    }
+
+    return new Date(
+        `${match[1]}T00:00:00Z`
+    );
+}
+
+
+function parseQuery(request) {
+    const url = new URL(request.url);
+
+    let limit =
+        Number.parseInt(
+            url.searchParams.get("limit") || "50",
+            10
+        );
+
+    let days =
+        Number.parseInt(
+            url.searchParams.get("days") || "7",
+            10
+        );
+
+    if (!Number.isFinite(limit)) {
+        limit = 50;
+    }
+
+    if (!Number.isFinite(days)) {
+        days = 7;
+    }
+
+    limit = Math.min(
+        Math.max(limit, 1),
+        200
+    );
+
+    days = Math.min(
+        Math.max(days, 1),
+        90
+    );
+
+    return {
+        limit,
+        days,
+    };
+}
+
+
+function parseArticles(content) {
+    const articles = [];
+
+    for (const line of content.split("\n")) {
+        if (!line.trim()) {
+            continue;
+        }
+
+        try {
+            articles.push(
+                JSON.parse(line)
+            );
+        } catch (error) {
+            console.error(
+                "Invalid JSONL line:",
+                error
+            );
+        }
+    }
+
+    return articles;
+}
+
+
+function articleDate(article) {
+    return new Date(
+        article.published_at ||
+        article.fetched_at
+    );
+}
+
+
+export default async (request) => {
     try {
-        const root = process.env.DROPBOX_ROOT?.trim() || "";
+        const {
+            limit,
+            days,
+        } = parseQuery(request);
+
+        const root =
+            process.env.DROPBOX_ROOT?.trim() || "";
 
         const articlesPath = root
             ? `${normalizePath(root)}/articles`
             : "/articles";
 
-        const result = await dbx.filesListFolder({
-            path: normalizePath(articlesPath),
-        });
+        const files =
+            await listArticleFiles(
+                normalizePath(articlesPath)
+            );
+
+        const cutoff =
+            new Date();
+
+        cutoff.setUTCDate(
+            cutoff.getUTCDate() - days
+        );
+
+        /*
+         * Only download JSONL files whose date
+         * is recent enough.
+         */
+        const relevantFiles =
+            files.filter(file => {
+                const date =
+                    parseDateFromFilename(
+                        file.name
+                    );
+
+                if (!date) {
+                    return true;
+                }
+
+                return date >= cutoff;
+            });
 
         const articles = [];
 
-        for (const entry of result.result.entries) {
-            if (
-                entry[".tag"] !== "file" ||
-                !entry.name.endsWith(".jsonl")
-            ) {
-                continue;
-            }
+        for (const file of relevantFiles) {
+            const content =
+                await readText(
+                    file.path_lower
+                );
 
-            const content = await readText(entry.path_lower);
+            articles.push(
+                ...parseArticles(content)
+            );
+        }
 
-            for (const line of content.split("\n")) {
-                if (!line.trim()) {
-                    continue;
-                }
+        /*
+         * Remove duplicate IDs.
+         */
+        const unique =
+            new Map();
 
-                articles.push(
-                    JSON.parse(line)
+        for (const article of articles) {
+            if (article.id) {
+                unique.set(
+                    article.id,
+                    article
                 );
             }
         }
 
-        articles.sort(
+        const result =
+            Array.from(
+                unique.values()
+            );
+
+        /*
+         * Newest first.
+         */
+        result.sort(
             (a, b) =>
-                new Date(b.published_at || b.fetched_at) -
-                new Date(a.published_at || a.fetched_at)
+                articleDate(b) -
+                articleDate(a)
         );
+
+        /*
+         * Return only the requested number.
+         */
+        const limited =
+            result.slice(0, limit);
 
         return new Response(
             JSON.stringify({
-                articles,
+                articles: limited,
+                count: limited.length,
+                days,
+                limit,
             }),
             {
                 status: 200,
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type":
+                        "application/json",
+
                     "Cache-Control":
                         "public, max-age=300",
                 },
             }
         );
-   } catch (error) {
-        console.error("Dropbox/API error:", error);
+
+    } catch (error) {
+        console.error(
+            "Dropbox/API error:",
+            error
+        );
 
         return new Response(
             JSON.stringify({
-                error: "Failed to retrieve news",
-                message: error?.message || String(error),
-                name: error?.name || "UnknownError",
+                error:
+                    "Failed to retrieve news",
             }),
             {
                 status: 500,
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type":
+                        "application/json",
                 },
             }
         );

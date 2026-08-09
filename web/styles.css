@@ -268,3 +268,13 @@ footer {
         gap: 0.2rem;
     }
 }
+
+.feed-section-heading {
+    margin: 2rem 0 1rem;
+
+    font-size: 1.4rem;
+}
+
+.feed-section-heading:first-child {
+    margin-top: 0;
+}
