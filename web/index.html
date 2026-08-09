@@ -6,13 +6,84 @@
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
+
     <title>CyberNews</title>
+
+    <link rel="stylesheet" href="/styles.css">
 </head>
 
 <body>
-    <main>
-        <h1>CyberNews</h1>
-        <p>Cybersecurity news, collected automatically.</p>
+    <header class="site-header">
+        <div class="header-inner">
+            <div>
+                <h1>CyberNews</h1>
+                <p>Cybersecurity news, collected automatically.</p>
+            </div>
+
+            <button id="refresh-button">
+                Refresh
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <section class="controls">
+            <div>
+                <label for="category-filter">
+                    Category
+                </label>
+
+                <select id="category-filter">
+                    <option value="all">All</option>
+                    <option value="vulnerability">
+                        Vulnerabilities
+                    </option>
+                    <option value="malware">
+                        Malware
+                    </option>
+                    <option value="breach">
+                        Breaches
+                    </option>
+                    <option value="threat_actor">
+                        Threat actors
+                    </option>
+                    <option value="other">
+                        Other
+                    </option>
+                </select>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-heading">
+                <h2>Latest news</h2>
+                <span id="article-count"></span>
+            </div>
+
+            <div id="loading" class="status">
+                Loading news...
+            </div>
+
+            <div
+                id="error"
+                class="status error hidden"
+            ></div>
+
+            <div
+                id="articles"
+                class="articles"
+            ></div>
+        </section>
+
     </main>
+
+    <footer>
+        <p>
+            CyberNews · Automated cybersecurity news aggregation
+        </p>
+    </footer>
+
+    <script src="/app.js"></script>
 </body>
 </html>

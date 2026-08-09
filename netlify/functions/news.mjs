@@ -54,6 +54,22 @@ export default async () => {
                 : "",
         });
 
+        console.log(
+        "Dropbox root:",
+        JSON.stringify(root)
+    );
+
+    console.log(
+        "Dropbox entries:",
+        result.result.entries.map(
+            entry => ({
+                name: entry.name,
+                path: entry.path_display,
+                type: entry[".tag"],
+            })
+        )
+    );
+
         const articles = [];
 
         for (const entry of result.result.entries) {
