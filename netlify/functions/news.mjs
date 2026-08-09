@@ -94,12 +94,14 @@ export default async () => {
                 },
             }
         );
-    } catch (error) {
-        console.error(error);
+   } catch (error) {
+        console.error("Dropbox/API error:", error);
 
         return new Response(
             JSON.stringify({
                 error: "Failed to retrieve news",
+                message: error?.message || String(error),
+                name: error?.name || "UnknownError",
             }),
             {
                 status: 500,
