@@ -46,10 +46,12 @@ async function readText(path) {
 
 export default async () => {
     try {
+        const root = process.env.DROPBOX_ROOT?.trim() || "";
+
         const result = await dbx.filesListFolder({
-            path: normalizePath(
-                process.env.DROPBOX_ROOT || ""
-            ),
+            path: root
+                ? normalizePath(root)
+                : "",
         });
 
         const articles = [];
