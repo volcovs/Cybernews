@@ -16,7 +16,7 @@ class Article(BaseModel):
 
     summary: str | None = None
 
-    category: str | None = None
+    category: str = "uncategorized"
 
     importance_score: float | None = None
 

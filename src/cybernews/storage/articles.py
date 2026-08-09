@@ -12,9 +12,11 @@ class ArticleRepository:
     def _path_for_date(self, date) -> str:
         return f"articles/{date.isoformat()}.jsonl"
 
-    def save_articles(self, articles: list[Article]) -> None:
+    def save_articles(self, articles: list[Article]) -> list[Article]:
         if not articles:
-            return
+            return []
+
+        newly_saved: list[Article] = []
 
         grouped: dict[str, list[Article]] = {}
 
@@ -58,6 +60,10 @@ class ArticleRepository:
             ) + "\n"
 
             self.storage.write_text(path, content)
+
+            newly_saved.extend(new_articles)
+
+        return newly_saved
 
     def load_date(self, date) -> list[Article]:
         path = self._path_for_date(date)

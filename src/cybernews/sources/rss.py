@@ -1,14 +1,14 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 import feedparser
-
 
 @dataclass
 class RawArticle:
     title: str
     url: str
     source: str
-    published: str | None
+    published_at: datetime | None
     summary: str | None
 
 
@@ -34,12 +34,20 @@ class RSSSource:
             if not title or not url:
                 continue
 
+            published_at = None
+
+            if entry.get("published_parsed"):
+                published_at = datetime(
+                    *entry.published_parsed[:6],
+                    tzinfo=timezone.utc,
+                )
+
             articles.append(
                 RawArticle(
                     title=title,
                     url=url,
                     source=self.name,
-                    published=entry.get("published"),
+                    published_at=published_at,
                     summary=entry.get("summary"),
                 )
             )
