@@ -48,27 +48,13 @@ export default async () => {
     try {
         const root = process.env.DROPBOX_ROOT?.trim() || "";
 
+        const articlesPath = root
+            ? `${normalizePath(root)}/articles`
+            : "/articles";
+
         const result = await dbx.filesListFolder({
-            path: root
-                ? normalizePath(root)
-                : "",
+            path: normalizePath(articlesPath),
         });
-
-        console.log(
-        "Dropbox root:",
-        JSON.stringify(root)
-    );
-
-    console.log(
-        "Dropbox entries:",
-        result.result.entries.map(
-            entry => ({
-                name: entry.name,
-                path: entry.path_display,
-                type: entry[".tag"],
-            })
-        )
-    );
 
         const articles = [];
 
