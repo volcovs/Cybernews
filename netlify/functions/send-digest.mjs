@@ -217,14 +217,28 @@ function createDigestHtml(articles) {
     `;
 }
 
+export default async (request) => {
+    if (request.method !== "POST") {
+        return new Response(
+            JSON.stringify({
+                error: "Method Not Allowed",
+            }),
+            {
+                status: 405,
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                },
+            }
+        );
+    }
 
-export default async () => {
     try {
         const recipient =
             process.env.DIGEST_RECIPIENT;
 
         console.log("Sending digest to:", recipient);
-        
+
         if (!recipient) {
             throw new Error(
                 "DIGEST_RECIPIENT is not configured"
