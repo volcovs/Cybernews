@@ -40,11 +40,6 @@ GrahamCluley = RSSSource(
     feed_url="https://www.grahamcluley.com/feed/",
 )
 
-SophosNews = RSSSource(
-    name="SophosNews",
-    feed_url="https://news.sophos.com/en-us/feed/",
-)
-
 SchneierOnSecurity = RSSSource(
     name="SchneierOnSecurity",
     feed_url="https://www.schneier.com/blog/atom.xml",
@@ -110,7 +105,6 @@ SOURCES = [
     TheRecord,
     SecurityAffairs,
     GrahamCluley,
-    SophosNews,
     SchneierOnSecurity,
     # National CERTs
     CISA,
