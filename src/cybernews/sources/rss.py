@@ -17,35 +17,35 @@ class RSSSource:
         self.name = name
         self.feed_url = feed_url
         
-def fetch(self) -> list[RawArticle]:
-    feed = feedparser.parse(self.feed_url)
+    def fetch(self) -> list[RawArticle]:
+        feed = feedparser.parse(self.feed_url)
 
-    if feed.bozo and not feed.entries:
-        return []
+        if feed.bozo and not feed.entries:
+            return []
 
-    articles: list[RawArticle] = []
-    for entry in feed.entries:
-        title = entry.get("title", "").strip()
-        url = entry.get("link", "").strip()
+        articles: list[RawArticle] = []
+        for entry in feed.entries:
+            title = entry.get("title", "").strip()
+            url = entry.get("link", "").strip()
 
-        if not title or not url:
-            continue
+            if not title or not url:
+                continue
 
-        published_at = None
-        if entry.get("published_parsed"):
-            published_at = datetime(
-                *entry.published_parsed[:6],
-                tzinfo=timezone.utc,
+            published_at = None
+            if entry.get("published_parsed"):
+                published_at = datetime(
+                    *entry.published_parsed[:6],
+                    tzinfo=timezone.utc,
+                )
+
+            articles.append(
+                RawArticle(
+                    title=title,
+                    url=url,
+                    source=self.name,
+                    published_at=published_at,
+                    summary=entry.get("summary"),
+                )
             )
 
-        articles.append(
-            RawArticle(
-                title=title,
-                url=url,
-                source=self.name,
-                published_at=published_at,
-                summary=entry.get("summary"),
-            )
-        )
-
-    return articles
+        return articles
