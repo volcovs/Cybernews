@@ -223,6 +223,8 @@ export default async () => {
         const recipient =
             process.env.DIGEST_RECIPIENT;
 
+        console.log("Sending digest to:", recipient);
+        
         if (!recipient) {
             throw new Error(
                 "DIGEST_RECIPIENT is not configured"
