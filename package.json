@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/volcovs/Cybernews#readme",
   "dependencies": {
-    "dropbox": "^10.44.0"
+    "dropbox": "^10.44.0",
+    "resend": "^6.18.1"
   }
 }
