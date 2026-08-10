@@ -67,6 +67,136 @@ async function loadNews() {
     }
 }
 
+function formatCategory(category) {
+    if (!category) {
+        return "Other";
+    }
+
+    return category
+        .replaceAll("_", " ")
+        .replace(
+            /\b\w/g,
+            character => character.toUpperCase()
+        );
+}
+
+
+function formatDate(value) {
+    if (!value) {
+        return "Unknown date";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Unknown date";
+    }
+
+    return new Intl.DateTimeFormat(
+        undefined,
+        {
+            dateStyle: "medium",
+            timeStyle: "short",
+        }
+    ).format(date);
+}
+
+function escapeHtml(value) {
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        String(value ?? "");
+
+    return div.innerHTML;
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value)
+        .replaceAll('"', "&quot;");
+}
+
+function createArticleCard(article) {
+    const card =
+        document.createElement("article");
+
+    card.className = "article-card";
+
+    const score =
+        Math.round(article.importance_score ?? 0);
+
+    const category =
+        formatCategory(article.category);
+
+    const date =
+        formatDate(
+            article.published_at ||
+            article.fetched_at
+        );
+
+    const cves =
+        article.cves || [];
+
+    card.innerHTML = `
+        <div class="article-header">
+            <span class="score">
+                ${score}
+            </span>
+
+            <div class="article-meta">
+                <span class="category">
+                    ${escapeHtml(category)}
+                </span>
+
+                <span>
+                    ${escapeHtml(article.source)}
+                </span>
+
+                <span>
+                    ${escapeHtml(date)}
+                </span>
+            </div>
+        </div>
+
+        <h3>
+            <a
+                href="${escapeAttribute(article.url)}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                ${escapeHtml(article.title)}
+            </a>
+        </h3>
+
+        ${
+            article.summary
+                ? `
+                    <p class="summary">
+                        ${escapeHtml(article.summary)}
+                    </p>
+                  `
+                : ""
+        }
+
+        ${
+            cves.length
+                ? `
+                    <div class="cves">
+                        ${cves.map(
+                            cve => `
+                                <span class="cve">
+                                    ${escapeHtml(cve)}
+                                </span>
+                            `
+                        ).join("")}
+                    </div>
+                  `
+                : ""
+        }
+    `;
+
+    return card;
+}
 
 function renderArticles() {
     const selectedCategory =
@@ -156,58 +286,6 @@ function renderArticles() {
         );
     }
 }
-
-function formatCategory(category) {
-    if (!category) {
-        return "Other";
-    }
-
-    return category
-        .replaceAll("_", " ")
-        .replace(
-            /\b\w/g,
-            character => character.toUpperCase()
-        );
-}
-
-
-function formatDate(value) {
-    if (!value) {
-        return "Unknown date";
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return "Unknown date";
-    }
-
-    return new Intl.DateTimeFormat(
-        undefined,
-        {
-            dateStyle: "medium",
-            timeStyle: "short",
-        }
-    ).format(date);
-}
-
-
-function escapeHtml(value) {
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        String(value ?? "");
-
-    return div.innerHTML;
-}
-
-
-function escapeAttribute(value) {
-    return escapeHtml(value)
-        .replaceAll('"', "&quot;");
-}
-
 
 function showLoading() {
     loadingElement.classList.remove(
